@@ -50,6 +50,7 @@ jsonpatch==1.33
 jsonpath-python==1.0.6
 jsonpointer==2.4
 kubernetes==29.0.0
+langchain==0.1.13
 langchain-community==0.0.29
 langchain-core==0.1.36
 langchain-openai==0.1.1

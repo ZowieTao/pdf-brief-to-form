@@ -6,9 +6,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_community.vectorstores.pinecone import Pinecone
-from langchain_openai import OpenAIEmbeddings
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 
+from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 
 import os
@@ -17,33 +17,30 @@ import os
 load_dotenv()
 
 
-def pineconeForCloud():
-    raise ("to complete PineconeForCloud: \n")
-
-
-def localChroma(texts: List[Document], embeddings: OpenAIEmbeddings, query: str):
-    print("local it into Chroma: \n")
-    vectorStore = Chroma.from_documents(texts, embeddings)
-
-    docs = vectorStore.similarity_search(query)
+def localChroma(vector_store: Chroma, query: str):
+    docs = vector_store.similarity_search(query)
 
     # Here's an example of the first document that was returned
+    """ 
     for doc in docs:
         print(f"{doc.page_content}\n")
+    """
 
-    OPENAI_TEMPERATURE = os.getenv("OPENAI_TEMPERATURE")
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    temperature = os.getenv("OPENAI_TEMPERATURE")
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
-    llm = ChatOpenAI(temperature=OPENAI_TEMPERATURE, openai_api_key=OPENAI_API_KEY)
+    llm = ChatOpenAI(
+        temperature=temperature, streaming=True, openai_api_key=openai_api_key
+    )
 
     chain = load_qa_with_sources_chain(llm, chain_type="stuff")
 
-    docs = vectorStore.similarity_search(query)
+    docs = vector_store.similarity_search(query)
 
     result = chain.invoke(
         {"input_documents": docs, "question": query}, return_only_outputs=True
     )
-    print(f"INVOKE RESULT: \n {result}")
+    print(f"question: {query} \nINVOKE RESULT: \n {result}")
 
 
 def main():
@@ -52,10 +49,12 @@ def main():
 
     data = loader.load()
 
+    """
     # Note: If you're using PyPDFLoader then it will split by page for you already
     print(f"You have {len(data)} document(s) in your data")
     print(f"There are {len(data[0].page_content)} characters in your sample document")
     print(f"Here is a sample: {data[0].page_content[:200]}")
+    """
 
     # We'll split our data into chunks around 500 characters each with a 50 character overlap. These are relatively small.
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
@@ -67,9 +66,22 @@ def main():
 
     embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
-    query = "活动营销的核心诉求是什么?"
+    # print("local it into Chroma: \n")
+    vector_store = Chroma.from_documents(texts, embeddings)
 
-    localChroma(texts, embeddings, query)
+    queys = [
+        "what is my brand name",
+        "what is contact info: include email, phone number, and social media links",
+        "what is this campaign name",
+        "give me campaign description: Provide relevant information about campaign, such as product’s positioning, target audiences, and core features.",
+        "Video requirements: Provide suggestions for what you’d like to see in the video to creators. These should be different from your non-negotiable requirements",
+    ]
+
+    for query in queys:
+        localChroma(
+            vector_store,
+            query,
+        )
 
 
 if __name__ == "__main__":
