@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "dotenv",
+        "faiss",
         "langchain",
         "openai",
         "vectorstores"
